@@ -1,0 +1,206 @@
+---
+title: "Surfboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(plotly)
+library(lubridate)
+library(DT)
+```
+
+```{r include=FALSE}
+# Data cleaning part 
+raw_data = read.csv("surf_data.csv")
+```
+
+```{r include=FALSE}
+
+# Translation of days and months names from French to English
+weekdays_translation_fr <- c("Lundi" = "Monday", "Mardi" = "Tuesday", 
+                              "Mercredi" = "Wednesday", "Jeudi" = "Thursday", 
+                              "Vendredi" = "Friday", "Samedi" = "Saturday", 
+                              "Dimanche" = "Sunday")
+
+cleaned_data = raw_data %>% 
+  separate(day, c("Week day", "Day"), sep = " ", extra = "merge") %>%
+  mutate(year = 2024)
+
+cleaned_data <- cleaned_data %>%
+  mutate(`Week day` = recode(`Week day`, !!!weekdays_translation_fr))
+
+cleaned_data <- cleaned_data %>%
+  mutate(Day = gsub("Janvier", "January", Day),
+         Day = gsub("Février", "February", Day),
+         Day = gsub("Mars", "March", Day),
+         Day = gsub("Avril", "April", Day),
+         Day = gsub("Mai", "May", Day),
+         Day = gsub("Juin", "June", Day),
+         Day = gsub("Juillet", "July", Day),
+         Day = gsub("Août", "August", Day),
+         Day = gsub("Septembre", "September", Day),
+         Day = gsub("Octobre", "October", Day),
+         Day = gsub("Novembre", "November", Day),
+         Day = gsub("Décembre", "December", Day))
+
+```
+
+```{r, include = FALSE}
+# What I Want to do is to convert the two columns day and hour in the timestamp format
+# First I separate the day of the week from gg/month
+
+cleaned_data = cleaned_data %>%
+  mutate(timestamp = dmy_hm(paste(Day, year, hour,  sep = " ")))
+
+cleaned_data = cleaned_data %>% separate(waves_size, c("min_wave_size", "max_wave_size"), sep = " - ")
+
+cleaned_data = cleaned_data %>% 
+  separate(wind_direction, c("w","d", "wind_direction"), sep=" ") %>%
+  select(-w, -d) %>%
+  mutate(day = as_date(timestamp))
+
+cleaned_data
+
+
+surf_data = cleaned_data %>% select(`Week day`, day, timestamp, wind_speed, wind_direction, min_wave_size, max_wave_size) %>%
+  mutate(min_wave_size = as.numeric(min_wave_size), max_wave_size = as.numeric(max_wave_size), avg_wave_size = (min_wave_size+max_wave_size)/2) %>% arrange(timestamp) 
+
+surf_data
+
+```
+
+```{r include=FALSE}
+# Computing best day part 
+
+# This is just a test, I'm gonna create a stupid function to compute a score for the day just to try the dashboard
+
+best_day_data = surf_data %>% 
+  group_by(`Week day`, day) %>% 
+  summarize(highest_wave = max(max_wave_size), 
+            min_wave = round(min(min_wave_size),2),
+            avg_wave = round(mean(avg_wave_size),2), 
+            max_wind = round(max(wind_speed),2), 
+            avg_wind = round(mean(wind_speed),2),
+            min_wind = round(min(wind_speed)),2) %>%
+  mutate(score = highest_wave + avg_wave) %>%
+  arrange(desc(score))
+
+best_day = best_day_data[1, ]
+best_day
+```
+
+Summary
+=======================================================================
+<h3 style="margin-top: 0px; margin-bottom-10px; font-weight: 500;"> Best day of the week </h3>
+
+Row
+-----------------------------------------------------------------------
+
+### Best day
+
+```{r}
+valueBox(best_day$`Week day`, caption = format(best_day$day,"%d %B"), icon="fa-calendar-days")
+```
+
+
+### Wave height
+
+```{r}
+valueBox(paste(best_day$highest_wave, "m", sep = " "), caption = "Highest wave", icon="fa-water")
+```
+
+### Wind
+
+```{r}
+valueBox(paste(best_day$avg_wind, "km/h", sep = " "), caption = "Average wind speed", icon="fa-wind")
+```
+
+### Sea score
+
+```{r}
+valueBox(best_day$score, caption = "Sea score", icon="fa-gauge-high")
+```
+
+Row {data-height=500}
+-----------------------------------------------------------------------
+<h3 style="margin-top: 0px; margin-bottom-10px; font-weight: 500;"> Best day of the week </h3>
+
+### Highest wave per day
+
+```{r}
+best_day_data = best_day_data %>% arrange(day)
+
+highest_wave_plot = ggplot(best_day_data) +
+  geom_bar(aes(x=day, y = highest_wave), stat = 'identity', fill="#6ca3e9") +
+  scale_x_date(breaks = "1 day", date_labels = "%d %B") +
+  theme_bw() +
+  labs(x='', y = "Height (m)")
+
+ggplotly(highest_wave_plot)
+
+```
+
+
+```{r}
+#plot_ly(
+#  data = surf_data,
+#  x = ~wind_speed,
+#  y = ~avg_wave_size,
+#  type = "scatter"
+#)
+```
+
+### Data summary of the week
+
+```{r}
+datatable(best_day_data %>% select(-score))
+```
+
+
+Row {data-width=350}
+-----------------------------------------------------------------------
+
+### Wave size (Daily)
+
+```{r}
+per_day_data = surf_data %>% 
+  mutate(date = as_date(timestamp)) %>%
+  group_by(day, date) %>%
+  summarise(min_wave_size = min(min_wave_size), max_wave_size = max(max_wave_size), avg_wave_size = mean(avg_wave_size))
+
+pivot_t = pivot_longer(per_day_data, cols = c("min_wave_size", "max_wave_size", "avg_wave_size"), names_to = "wave_type", values_to = "value")
+wave_plot = ggplot(pivot_t) +
+  geom_line(aes(x=date, y = value, color=wave_type)) +
+  labs(y="Average wave size (m)", x="") +
+  scale_x_date(date_breaks = "1 day", date_labels = "%d %B") +
+  theme_bw() + 
+  scale_color_discrete(name = "Type", labels = c("Average wave size", "Maximum wave size", "Minimum wave size")) + 
+  theme(legend.position = "bottom") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ggplotly(wave_plot)
+```
+
+### Average wind strength (Daily)
+
+```{r}
+per_day_wind = surf_data %>% mutate(day = as_date(timestamp)) %>% group_by(day) %>% summarize(avg_wind_speed = mean(wind_speed))
+
+plot_wind = ggplot(per_day_wind) +
+  geom_line(aes(x=day, y = avg_wind_speed), col="orange") +
+  scale_x_date(date_breaks = "1 day", date_labels = "%d %B") +
+  labs(y="Wind speed (km/h)", x="") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplotly(plot_wind)
+```
+
+
+Detailed
+======================================================================
+
