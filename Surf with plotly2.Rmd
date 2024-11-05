@@ -42,7 +42,7 @@ cleaned_data <- cleaned_data %>%
          Day = gsub("Mai", "May", Day),
          Day = gsub("Juin", "June", Day),
          Day = gsub("Juillet", "July", Day),
-         Day = gsub("Août", "August", Day),
+         Day = gsub("Aot", "August", Day),
          Day = gsub("Septembre", "September", Day),
          Day = gsub("Octobre", "October", Day),
          Day = gsub("Novembre", "November", Day),
