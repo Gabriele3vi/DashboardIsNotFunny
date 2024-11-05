@@ -38,6 +38,9 @@ cleaned_data = cleaned_data %>%
 surf_data = cleaned_data %>% select(`Week day`, day, timestamp, wind_speed, wind_direction, min_wave_size, max_wave_size) %>%
   mutate(min_wave_size = as.numeric(min_wave_size), max_wave_size = as.numeric(max_wave_size), avg_wave_size = (min_wave_size+max_wave_size)/2) %>% arrange(timestamp) 
 
+
+
+
 surf_data
 ```
 
