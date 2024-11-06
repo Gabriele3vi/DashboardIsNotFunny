@@ -262,10 +262,10 @@ best_moment <- data %>%
             min_wind_detail = round(min(wind_speed),2),
             wave_score_detail = round(score_wave_detail(avg_wave_detail),2),
             wind_score_detail = round(score_wind_detail(avg_wind_detail),2),
-            score_detail = round(wave_score_detail*0.8 - wind_score_detail*0.2,1),
+            sea_score_detail = round(wave_score_detail*0.8 - wind_score_detail*0.2,1),
             hour = format(timestamp, "%H:%M"),
             temperature = temperature) %>%
-  arrange(desc(score_detail))
+  arrange(desc(sea_score_detail))
  
 best_hour <- best_moment[1,]
 best_hour
@@ -296,7 +296,7 @@ valueBox(paste(best_hour$avg_wind_detail, "km/h", sep = " "), caption = "Average
 ### Sea score
 
 ```{r}
-valueBox(best_hour$score_detail, caption = "Sea quality score", icon="fa-gauge-high")
+valueBox(best_hour$sea_score_detail, caption = "Sea quality score", icon="fa-gauge-high")
 ```
 
 Row {data-height=500}
@@ -304,16 +304,67 @@ Row {data-height=500}
 
 ### Tempertures of the best day
 
-```{r include = FALSE}
+```{r}
 
-hour_temperature = best_moment %>% mutate(hour = as.POSIXct(timestamp)) %>% group_by(hour) %>% summarize(temperature = temperature)
+hour_temperature <- best_moment %>% mutate(hour = as.POSIXct(timestamp)) %>% group_by(hour) %>% summarize(temperature = temperature)
 
 plot_temp = ggplot(hour_temperature) +
   geom_line(aes(x= hour, y = temperature), col="purple") +
   scale_x_datetime(date_breaks = "1 hour", date_labels = "%H:%M") +
-  labs(y="Temperature", x="", title=paste("Temperatures on", best_day$`Week day`, sep = " ")) +
+  labs(y="Temperature", x="") +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ggplotly(plot_temp)
+
 ```
+
+### Data summary of the day
+
+```{r}
+best_time <- best_moment %>% select(-`Week day`) %>% select(hour, everything()) %>% arrange(timestamp)
+
+datatable(best_time %>% group_by(hour) %>% select(-timestamp))
+```
+
+
+Row {data-width=350}
+-----------------------------------------------------------------------
+
+### Average wind of the day depending on the wind direction
+
+```{r}
+wind_direction_data <- data %>% group_by(wind_direction) %>% summarize(average_wind = round(mean(wind_speed),2))
+
+wind_direction_plot <- ggplot(wind_direction_data) +
+  geom_bar(aes(x=wind_direction, y = average_wind), stat = 'identity', fill="orange", width = 0.3) +
+  theme_bw() +
+  coord_flip()+
+  labs(x='', y = "Average wind")
+
+ggplotly(wind_direction_plot)
+
+```
+
+### Quality scores of the sea, waves and wind (Hourly)
+
+```{r}
+per_hour_scores = best_moment %>% 
+   select(timestamp, hour, wind_score_detail, wave_score_detail, sea_score_detail)
+
+pivot <- pivot_longer(per_hour_scores, cols = c("wind_score_detail", "wave_score_detail", "sea_score_detail"), names_to = "scores", values_to = "value")
+
+scores_hour <- ggplot(pivot) +
+  geom_line(aes(x=timestamp, y = value, color=scores)) +
+  labs(y="Scores", x="") +
+  scale_x_datetime(date_breaks = "1 hour", date_labels = "%H:%M") +
+  theme_bw() + 
+  scale_color_discrete(name = "Type", labels = c("Wind score per hour", "Wave score per hour", "Total score per hour")) + 
+  theme(legend.position = "bottom") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplotly(scores_hour)
+
+```
+
+
