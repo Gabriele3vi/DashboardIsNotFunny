@@ -1,0 +1,57 @@
+day,hour,waves_size,wind_speed,wind_direction,temperature
+Jeudi 14 Novembre,01:00,0.4 - 0.6,25,Orientation vent Est Nord Est,7
+Jeudi 14 Novembre,04:00,0.5 - 0.7,20,Orientation vent Est Nord Est,6
+Jeudi 14 Novembre,07:00,0.5 - 0.7,25,Orientation vent Est Nord Est,7
+Jeudi 14 Novembre,10:00,0.5 - 0.7,26,Orientation vent Est Nord Est,7
+Jeudi 14 Novembre,13:00,0.5 - 0.7,20,Orientation vent Est Nord Est,10
+Jeudi 14 Novembre,16:00,0.5 - 0.7,24,Orientation vent Est Nord Est,12
+Jeudi 14 Novembre,19:00,0.4 - 0.6,31,Orientation vent Est Nord Est,12
+Jeudi 14 Novembre,22:00,0.4 - 0.7,34,Orientation vent Est Nord Est,11
+Vendredi 15 Novembre,01:00,0.4 - 0.7,21,Orientation vent Est Nord Est,9
+Vendredi 15 Novembre,04:00,0.3 - 0.5,24,Orientation vent Est Nord Est,8
+Vendredi 15 Novembre,07:00,0.3 - 0.5,21,Orientation vent Est Nord Est,8
+Vendredi 15 Novembre,10:00,0.4 - 0.5,21,Orientation vent Est,8
+Vendredi 15 Novembre,13:00,0.4 - 0.6,17,Orientation vent Est,12
+Vendredi 15 Novembre,16:00,0.4 - 0.6,19,Orientation vent Est,13
+Vendredi 15 Novembre,19:00,0.4 - 0.6,21,Orientation vent Est,12
+Vendredi 15 Novembre,22:00,0.4 - 0.6,16,Orientation vent Est Sud Est,11
+Samedi 16 Novembre,01:00,0.4 - 0.6,16,Orientation vent Est,10
+Samedi 16 Novembre,04:00,0.4 - 0.6,11,Orientation vent Est,5
+Samedi 16 Novembre,07:00,0.4 - 0.5,14,Orientation vent Est Sud Est,5
+Samedi 16 Novembre,10:00,0.4 - 0.5,13,Orientation vent Est Sud Est,7
+Samedi 16 Novembre,13:00,0.3 - 0.5,8,Orientation vent Est Sud Est,13
+Samedi 16 Novembre,16:00,0.3 - 0.5,9,Orientation vent Est Sud Est,15
+Samedi 16 Novembre,19:00,0.3 - 0.5,9,Orientation vent Est Sud Est,11
+Samedi 16 Novembre,22:00,0.3 - 0.5,6,Orientation vent Est Sud Est,9
+Dimanche 17 Novembre,01:00,0.3 - 0.4,7,Orientation vent Est,8
+Dimanche 17 Novembre,04:00,0.3 - 0.5,5,Orientation vent Nord Est,7
+Dimanche 17 Novembre,07:00,0.3 - 0.4,3,Orientation vent Nord Nord Est,6
+Dimanche 17 Novembre,10:00,0.3 - 0.4,9,Orientation vent Nord Est,8
+Dimanche 17 Novembre,13:00,0.3 - 0.5,5,Orientation vent Est Nord Est,9
+Dimanche 17 Novembre,16:00,0.4 - 0.6,4,Orientation vent Est,10
+Dimanche 17 Novembre,19:00,0.4 - 0.6,5,Orientation vent Est Sud Est,9
+Dimanche 17 Novembre,22:00,0.5 - 0.7,6,Orientation vent Sud Est,8
+Lundi 18 Novembre,01:00,0.5 - 0.8,6,Orientation vent Sud Sud Est,7
+Lundi 18 Novembre,04:00,0.6 - 0.9,9,Orientation vent Ouest Nord Ouest,14
+Lundi 18 Novembre,07:00,0.8 - 1.1,8,Orientation vent Nord Ouest,14
+Lundi 18 Novembre,10:00,0.8 - 1.3,3,Orientation vent Nord Ouest,14
+Lundi 18 Novembre,13:00,1.0 - 1.5,6,Orientation vent Ouest Nord Ouest,14
+Lundi 18 Novembre,16:00,0.8 - 1.2,5,Orientation vent Ouest,14
+Lundi 18 Novembre,19:00,1.1 - 1.6,4,Orientation vent Ouest,13
+Lundi 18 Novembre,22:00,1.3 - 2.0,12,Orientation vent Ouest Sud Ouest,15
+Mardi 19 Novembre,01:00,1.2 - 1.8,15,Orientation vent Ouest,14
+Mardi 19 Novembre,04:00,1.1 - 1.7,11,Orientation vent Ouest Nord Ouest,13
+Mardi 19 Novembre,07:00,1.0 - 1.5,7,Orientation vent Nord Nord Ouest,12
+Mardi 19 Novembre,10:00,0.9 - 1.3,11,Orientation vent Nord Est,11
+Mardi 19 Novembre,13:00,0.8 - 1.2,11,Orientation vent Nord Est,11
+Mardi 19 Novembre,16:00,0.8 - 1.1,8,Orientation vent Est Nord Est,10
+Mardi 19 Novembre,19:00,0.6 - 0.8,13,Orientation vent Est Nord Est,9
+Mardi 19 Novembre,22:00,1.8 - 2.7,10,Orientation vent Est Nord Est,8
+Mercredi 20 Novembre,01:00,2.0 - 3.0,11,Orientation vent Est,7
+Mercredi 20 Novembre,04:00,2.1 - 3.1,12,Orientation vent Est Nord Est,6
+Mercredi 20 Novembre,07:00,2.3 - 3.5,15,Orientation vent Nord Est,6
+Mercredi 20 Novembre,10:00,2.1 - 3.1,19,Orientation vent Nord Nord Est,5
+Mercredi 20 Novembre,13:00,1.8 - 2.7,16,Orientation vent Nord,7
+Mercredi 20 Novembre,16:00,1.6 - 2.4,14,Orientation vent Nord,8
+Mercredi 20 Novembre,19:00,1.5 - 2.2,6,Orientation vent Nord,7
+Mercredi 20 Novembre,22:00,1.9 - 2.8,8,Orientation vent Sud Est,5

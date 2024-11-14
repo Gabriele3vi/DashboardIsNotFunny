@@ -1,0 +1,394 @@
+---
+title: "Surfboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+# runtime: shiny
+---
+
+```{r setup, include=FALSE}
+
+library(flexdashboard)
+# library(shiny)
+library(tidyverse)
+library(plotly)
+library(lubridate)
+library(DT)
+library(here)
+library(reticulate)
+
+# options(shiny.trace = TRUE)
+
+```
+
+
+```{python}
+exec(open('get_surf_data_v1.py').read())
+```
+
+
+```{r}
+cwd <- getwd()
+folder <- "meteo_surf_data"
+csv_file <- "meteo_surf_data.csv"
+full_path <- file.path(cwd, folder, csv_file)
+
+
+if (file.exists(full_path)) {
+  raw_data = read.csv(full_path)
+} else {
+}
+```
+
+
+
+```{r include = FALSE}
+
+# Translation of days and months names from French to English
+weekdays_translation_fr <- c("Lundi" = "Monday", "Mardi" = "Tuesday", 
+                              "Mercredi" = "Wednesday", "Jeudi" = "Thursday", 
+                              "Vendredi" = "Friday", "Samedi" = "Saturday", 
+                              "Dimanche" = "Sunday")
+
+translated_data = raw_data %>% 
+  separate(day, c("Week day", "Day"), sep = " ", extra = "merge") %>%
+  mutate(year = 2024)
+
+translated_data <- translated_data %>%
+  mutate(`Week day` = recode(`Week day`, !!!weekdays_translation_fr))
+
+translated_data <- translated_data %>%
+  mutate(Day = gsub("Janvier", "January", Day),
+         Day = gsub("Février", "February", Day),
+         Day = gsub("Mars", "March", Day),
+         Day = gsub("Avril", "April", Day),
+         Day = gsub("Mai", "May", Day),
+         Day = gsub("Juin", "June", Day),
+         Day = gsub("Juillet", "July", Day),
+         Day = gsub("Aout", "August", Day),
+         Day = gsub("Septembre", "September", Day),
+         Day = gsub("Octobre", "October", Day),
+         Day = gsub("Novembre", "November", Day),
+         Day = gsub("Décembre", "December", Day))
+
+```
+
+
+```{r, include = FALSE}
+# What I Want to do is to convert the two columns day and hour in the timestamp format
+# First I separate the day of the week from gg/month
+
+cleaned_data = translated_data %>%
+  mutate(timestamp = dmy_hm(paste(Day, year, hour,  sep = " ")))
+
+cleaned_data = cleaned_data %>% separate(waves_size, c("min_wave_size", "max_wave_size"), sep = " - ")
+
+cleaned_data = cleaned_data %>% 
+  separate(wind_direction, c("w","d", "wind_direction"), sep=" ") %>%
+  select(-w, -d) %>%
+  mutate(day = as_date(timestamp))
+
+cleaned_data
+
+
+surf_data = cleaned_data %>% select(`Week day`, day, timestamp, wind_speed, wind_direction, min_wave_size, max_wave_size,temperature) %>%
+  mutate(min_wave_size = as.numeric(min_wave_size), max_wave_size = as.numeric(max_wave_size), avg_wave_size = (min_wave_size+max_wave_size)/2) %>% arrange(timestamp) 
+
+surf_data
+```
+
+
+```{r include=FALSE}
+# Computing the best day part 
+
+score_wave <- function(avg_wave){
+  score <- 3.6*avg_wave
+  if (score > 10){
+    return(10)
+  } else{
+    return(score)
+  }
+}
+
+score_wind <- function(avg_wind){
+  score <- 2*avg_wind/10
+  if (score > 10){
+    return(10)
+  } else{
+    return(score)
+  }
+}
+best_day_data <- surf_data %>% 
+  group_by(`Week day`, day) %>% 
+  summarize(highest_wave = max(max_wave_size), 
+            min_wave = round(min(min_wave_size),2),
+            avg_wave = round(mean(avg_wave_size),2), 
+            max_wind = round(max(wind_speed),2), 
+            avg_wind = round(mean(wind_speed),2),
+            min_wind = round(min(wind_speed),2),
+            wave_score = round(score_wave(avg_wave),2),
+            wind_score = round(score_wind(avg_wind),2),
+            score = round(wave_score*0.8 - wind_score*0.2,1)) %>%
+  arrange(desc(score))
+
+
+best_day <- best_day_data[1, ]
+best_day
+
+```
+
+Summary
+=======================================================================
+<h3 style="margin-top: 0px; margin-bottom-10px; font-weight: 500;"> Best day to practice surf during the coming week  </h3>
+
+Row
+-----------------------------------------------------------------------
+
+### Best day
+
+```{r}
+valueBox(best_day$`Week day`, caption = format(best_day$day,"%d %B"), icon="fa-calendar-days")
+```
+
+
+### Wave height
+
+```{r}
+valueBox(paste(best_day$highest_wave, "m", sep = " "), caption = "Highest wave", icon="fa-water")
+```
+
+### Wind
+
+```{r}
+valueBox(paste(best_day$avg_wind, "km/h", sep = " "), caption = "Average wind speed", icon="fa-wind")
+```
+
+### Sea score
+
+```{r}
+valueBox(best_day$score, caption = "Sea quality score", icon="fa-gauge-high")
+```
+
+Row {data-height=500}
+-----------------------------------------------------------------------
+
+### Highest wave per day
+
+```{r}
+best_day_data = best_day_data %>% arrange(day)
+
+highest_wave_plot = ggplot(best_day_data) +
+  geom_bar(aes(x=day, y = highest_wave), stat = 'identity', fill="#6ca3e9") +
+  scale_x_date(breaks = "1 day", date_labels = "%d %B") +
+  theme_bw() +
+  labs(x='', y = "Height (m)")
+
+ggplotly(highest_wave_plot)
+
+```
+
+
+```{r}
+#plot_ly(
+#  data = surf_data,
+#  x = ~wind_speed,
+#  y = ~avg_wave_size,
+#  type = "scatter"
+#)
+```
+
+### Data summary of the week
+
+```{r}
+datatable(best_day_data %>% select(-score))
+```
+
+
+Row {data-width=350}
+-----------------------------------------------------------------------
+
+### Wave size (Daily)
+
+```{r}
+per_day_data = surf_data %>% 
+  mutate(date = as_date(timestamp)) %>%
+  group_by(day, date) %>%
+  summarise(min_wave_size = min(min_wave_size), max_wave_size = max(max_wave_size), avg_wave_size = mean(avg_wave_size))
+
+pivot_t = pivot_longer(per_day_data, cols = c("min_wave_size", "max_wave_size", "avg_wave_size"), names_to = "wave_type", values_to = "value")
+wave_plot = ggplot(pivot_t) +
+  geom_line(aes(x=date, y = value, color=wave_type)) +
+  labs(y="Average wave size (m)", x="") +
+  scale_x_date(date_breaks = "1 day", date_labels = "%d %B") +
+  theme_bw() + 
+  scale_color_discrete(name = "Type", labels = c("Average wave size", "Maximum wave size", "Minimum wave size")) + 
+  theme(legend.position = "bottom") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ggplotly(wave_plot)
+```
+
+### Average wind strength (Daily)
+
+```{r}
+per_day_wind = surf_data %>% mutate(day = as_date(timestamp)) %>% group_by(day) %>% summarize(avg_wind_speed = mean(wind_speed))
+
+plot_wind = ggplot(per_day_wind) +
+  geom_line(aes(x=day, y = avg_wind_speed), col="orange") +
+  scale_x_date(date_breaks = "1 day", date_labels = "%d %B") +
+  labs(y="Wind speed (km/h)", x="") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplotly(plot_wind)
+```
+
+
+Detailed
+======================================================================
+<h3 style="margin-top: 0px; margin-bottom-10px; font-weight: 500;"> Best hour to practice surf during the best day  </h3>
+
+```{r include=FALSE}
+# Computing the best hour part 
+
+score_wave_detail <- function(avg_wave_detail){
+  score <- 3.6*avg_wave_detail
+  if (score > 10){
+    return(10)
+  } else{
+    return(score)
+  }
+}
+
+score_wind_detail <- function(avg_wind_detail){
+  score <- 2*avg_wind_detail/10
+  if (score > 10){
+    return(10)
+  } else{
+    return(score)
+  }
+}
+
+```
+
+```{r include = FALSE}
+data <- surf_data %>%
+  filter(`Week day`== best_day$`Week day`)
+  
+
+best_moment <- data %>%
+  group_by(timestamp,`Week day`) %>%
+  summarize(highest_wave_detail = max(max_wave_size), 
+            min_wave_detail = round(min(min_wave_size),2),
+            avg_wave_detail = round(mean(avg_wave_size),2), 
+            max_wind_detail = round(max(wind_speed),2), 
+            avg_wind_detail = round(mean(wind_speed),2),
+            min_wind_detail = round(min(wind_speed),2),
+            wave_score_detail = round(score_wave_detail(avg_wave_detail),2),
+            wind_score_detail = round(score_wind_detail(avg_wind_detail),2),
+            sea_score_detail = round(wave_score_detail*0.8 - wind_score_detail*0.2,1),
+            hour = format(timestamp, "%H:%M"),
+            temperature = temperature) %>%
+  arrange(desc(sea_score_detail))
+ 
+best_hour <- best_moment[1,]
+best_hour
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Best hour
+
+```{r}
+valueBox(best_hour$hour, caption = best_hour$`Week day`, icon="fa-clock")
+```
+
+
+### Wave height
+
+```{r}
+valueBox(paste(best_hour$highest_wave_detail, "m", sep = " "), caption = "Highest wave", icon="fa-water")
+```
+
+### Wind
+
+```{r}
+valueBox(paste(best_hour$avg_wind_detail, "km/h", sep = " "), caption = "Average wind speed", icon="fa-wind")
+```
+
+### Sea score
+
+```{r}
+valueBox(best_hour$sea_score_detail, caption = "Sea quality score", icon="fa-gauge-high")
+```
+
+Row {data-height=500}
+-----------------------------------------------------------------------
+
+### Tempertures of the best day
+
+```{r}
+
+hour_temperature <- best_moment %>% mutate(hour = as.POSIXct(timestamp)) %>% group_by(hour) %>% summarize(temperature = temperature)
+
+plot_temp = ggplot(hour_temperature) +
+  geom_line(aes(x= hour, y = temperature), col="purple") +
+  scale_x_datetime(date_breaks = "1 hour", date_labels = "%H:%M") +
+  labs(y="Temperature", x="") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplotly(plot_temp)
+
+```
+
+### Data summary of the day
+
+```{r}
+best_time <- best_moment %>% select(-`Week day`) %>% select(hour, everything()) %>% arrange(timestamp)
+
+datatable(best_time %>% group_by(hour) %>% select(-timestamp))
+```
+
+
+Row {data-width=350}
+-----------------------------------------------------------------------
+
+### Average wind speed of the day depending on the wind direction
+
+```{r}
+wind_direction_data <- data %>% group_by(wind_direction) %>% summarize(average_wind = round(mean(wind_speed),2))
+
+wind_direction_plot <- ggplot(wind_direction_data) +
+  geom_bar(aes(x=wind_direction, y = average_wind), stat = 'identity', fill="orange", width = 0.3) +
+  theme_bw() +
+  coord_flip()+
+  labs(x='', y = "Average wind speed (km/h)")
+
+ggplotly(wind_direction_plot)
+
+```
+
+### Quality scores of the sea, waves and wind (Hourly)
+
+```{r}
+per_hour_scores = best_moment %>% 
+   select(timestamp, hour, wind_score_detail, wave_score_detail, sea_score_detail)
+
+pivot <- pivot_longer(per_hour_scores, cols = c("wind_score_detail", "wave_score_detail", "sea_score_detail"), names_to = "scores", values_to = "value")
+
+scores_hour <- ggplot(pivot) +
+  geom_line(aes(x=timestamp, y = value, color=scores)) +
+  labs(y="Scores", x="") +
+  scale_x_datetime(date_breaks = "1 hour", date_labels = "%H:%M") +
+  theme_bw() + 
+  scale_color_discrete(name = "Type", labels = c("Wind score per hour", "Wave score per hour", "Total score per hour")) + 
+  theme(legend.position = "bottom") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplotly(scores_hour)
+
+```
+
+
