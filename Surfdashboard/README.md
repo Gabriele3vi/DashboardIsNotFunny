@@ -55,10 +55,10 @@ If you choose not to set up a virtual environment, ensure Python is installed an
 - `beautifulsoup4`
 
 ## Use 
-- Open Surfdashboard.Rmd in RStudio
-- If you created a virtual env, or want to use an existing one, specify the Python executable in the R Markdown file in the "python_env" variable
+- Open `Surfdashboard.Rmd` in RStudio
+- If you created a virtual env, or want to use an existing one, specify the Python executable in the R Markdown file in the `python_env` variable
 - If no virtual environment is specified (`python_env <- NULL`), the system’s default Python interpreter will be used.
 - If you want to customize the Python script inputs from the Rmd file :    
 `url_input`: The URL to scrape data from (default: https://www.surf-report.com/meteo-surf/lacanau-s1043.html).   
-`export_path`: The directory to save the scraped data (default: "meteo_surf_data/meteo_surf_data.csv").
+`export_path`: The directory to save the scraped data (default: `meteo_surf_data/meteo_surf_data.csv`).
 - Render the R Markdown file to generate the interactive dashboard 
